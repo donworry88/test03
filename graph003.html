@@ -1,0 +1,336 @@
+<!-- Revised from demo code on http://jqueryui.com/ -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>0.01 fourier Control and Feel</title>
+
+<style>
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {display:none;}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+</style>
+</head>
+<body onload="init()">
+
+<br>
+<label class="switch">
+  <input type="checkbox" onclick="btnCheck();" id='xxx'>
+  <div class="slider"></div>
+</label><BR>
+
+
+<canvas id="myCanvas" width="900" height="500" style="position:absolute; top:150px; left:10px; border:2px solid #d3d3d3; "></canvas>
+
+<script>
+function init(){
+	//createControlPoint();
+	var gg=new m_gg();
+	gg.set();
+}
+function btnCheck(){
+}
+
+var m_gg=function ()
+{
+	var m_c = document.getElementById("myCanvas");
+ 	var m_rect = m_c.getBoundingClientRect();
+	var m_pps=[];
+	var m_gpps=[];
+	var m_sx=7,m_sy=7,m_select=9999;
+	var m_button=0;
+	var m_diffX=0,m_diffY=0;
+	var m_self=this;
+	var m_middle=0;
+
+	var m_maxP1=16,m_maxP2=16;
+
+	//power=sqrt(a*a+b*b)
+	//th=atan2(a,b) 
+	this.set=function(){
+		var ganX=900/m_maxP1;
+		var ganX2=ganX/7,ganX3=ganX/3;
+		for(var i=0;i<m_maxP1;i++){
+			this.createPoint(i*ganX+ganX2,125,"#c82124");
+			this.createPoint(i*ganX+ganX3,125,"#2821c4");
+		}
+		for(var i=0;i<m_maxP1;i++){
+			this.createPoint(i*ganX+ganX2,250,"#f8a1a4");
+			this.createPoint(i*ganX+ganX3,145,"#a8a1f4");
+		}
+		ganX=900/m_maxP2;
+		ganX2=ganX/3;
+		for(var i=0;i<m_maxP2;i++){
+			this.createPoint(i*ganX+ganX2,250+125,"#28c124");
+
+
+		}
+		this.draw();
+
+	}
+	this.itschanged=function(dift){
+		//dft... ift ...............itschanged 
+		//console.log("dift="+dift);
+		if(m_select>=m_maxP1*2 && m_select<m_pps.length-m_maxP2){
+			//tab=tan(th)  (a/b)  p=250-y
+			
+			//b=sqrt(p*p/(tab*tab+1))
+			//m_select-(m_maxP1*2)
+			var m1,tab,p,aa,bb;
+			var ppi,vv=1;
+			
+			if(m_select%2==1){
+				m1=m_select-1; 
+			}
+			else m1=m_select;
+			
+			if(m_pps[m1+1].y<=0)m_pps[m1+1].y=1;
+			if(m_pps[m1+1].y>=250)m_pps[m1+1].y=249;
+			p=250-m_pps[m1].y;
+			ppi=(-m_pps[m1+1].y+125)/(125/(Math.PI));
+			if(Math.abs(ppi)>Math.PI/2)vv=-1;	
+			tab=Math.tan(ppi);
+			
+			bb=Math.sqrt(p*p/(tab*tab+1))*vv;
+			m_pps[m1-(m_maxP1*2)].y=(bb*tab)+125;
+			m_pps[m1-(m_maxP1*2)+1].y=bb+125;
+			
+		}
+		if(dift==0)this.ccift();
+		else if(dift==1)this.ccdft();
+	}
+	this.ccift=function(){
+		var my=250-125;
+		var data=[];
+		var str="";
+
+		//power=sqrt(a*a+b*b)   a/b*a/b+b*b
+		//th=atan2(a,b) 
+		for(var i=0;i<m_maxP1;i++){
+			var a=m_pps[i*2].y-my,b=m_pps[i*2+1].y-my;
+			m_pps[i*2+m_maxP1*2].y=250-Math.sqrt(a*a+b*b);
+			m_pps[i*2+1+m_maxP1*2].y=my-Math.atan2(a,b)*(125/(Math.PI));
+		}
+
+		//console.log(str);
+		if(m_select%2==1)
+		{
+			//m_pps[m_select-1].y=m_zpps.y/m_z2pps.y
+		}
+		for(var i=0;i<m_maxP2;i++)data[i]=0.0;
+		for(var i=0;i<m_maxP1;i++)
+		{
+			var aa,bb,n=(i+1)*1.0;
+			aa=m_pps[i*2].y-my;
+			bb=m_pps[i*2+1].y-my;
+
+			for(var j=0;j<m_maxP2;j++){
+				data[j]+=Math.sin(Math.PI*2/(m_maxP2/n)*j )*aa;
+				data[j]+=Math.cos(Math.PI*2/(m_maxP2/n)*j )*bb;
+				//console.log(data);
+			}
+		}
+		//data[0]=Math.PI*2/(10.0/n)*2;//Math.cos(Math.PI*2);
+		//var str="";
+		for(var i=0;i<m_maxP2;i++)
+		{	
+			var ppy=Math.floor(data[i]+250+125)+m_middle;
+			//var ppy=Math.floor(data[i])+m_middle;
+			m_pps[m_pps.length-m_maxP2+i].y=ppy;
+			//str+=" "+ppy;
+		}
+		//console.log(m_middle);
+	}
+	this.ccdft=function(){
+		var my=250+125,mmy=125;
+		var vv=0;
+		
+		for(var i=0;i<m_maxP2;i++)m_middle+=m_pps[m_pps.length-m_maxP2+i].y-my;
+		m_middle/=m_maxP2;
+		for(var i=0;i<m_maxP1;i++){
+		    var sumA=0,sumB=0,n=(i+1)*1.0;;
+		    for(var j=0;j<m_maxP2;j++){
+			vv=m_pps[m_pps.length-m_maxP2+j].y-my-m_middle;
+			vv/=m_maxP1;
+		    	sumA+=vv*Math.sin(Math.PI*2/(m_maxP2/n)*j );
+			sumB+=vv*Math.cos(Math.PI*2/(m_maxP2/n)*j );
+		    }
+		    m_pps[i*2].y=sumA+mmy;
+		    m_pps[i*2+1].y=sumB+mmy;
+		}
+		for(var i=0;i<m_maxP1;i++){
+			var a=m_pps[i*2].y-mmy,b=m_pps[i*2+1].y-mmy;
+			m_pps[i*2+m_maxP1*2].y=250-Math.sqrt(a*a+b*b);
+			m_pps[i*2+1+m_maxP1*2].y=mmy-Math.atan2(a,b)*(125/(Math.PI));
+		}
+
+	}
+	function itschanged(a){m_self.itschanged(a);}
+
+	this.createPoint=function (x,y,col){
+		m_pps.push({x,y,col});
+	}
+        function createPoint(x,y){this.createPoint(x,y,"#c82124");}
+	function draw(){
+		//var c = document.getElementById("myCanvas");
+		var ctx = m_c.getContext("2d");
+		var zx=0,zy=0,zcol="0";
+		ctx.clearRect(0,0,m_c.width,m_c.height);
+			
+		ctx.beginPath();
+			ctx.lineWidth=1;
+			ctx.moveTo(0,125);
+			ctx.lineTo(800,125);
+			ctx.stroke();
+			ctx.moveTo(0,125+250);
+			ctx.lineTo(800,125+250);
+			ctx.stroke();
+ctx.closePath();
+		for(var i=0;i<m_pps.length-m_maxP2;i++){
+			var col=m_pps[i].col;
+			var ppx,ppy;
+			ppx=m_pps[i].x;ppy=m_pps[i].y-(m_sy/2);
+			ctx.beginPath();
+			ctx.lineWidth=2;
+			ctx.moveTo(ppx,250);
+			ctx.lineTo(ppx,ppy);
+			ctx.stroke();
+			ctx.closePath();
+			
+			zx=ppx;zy=ppy;zcol=col;
+		}	
+
+
+		for(var i=0;i<m_pps.length;i++){
+			var col=m_pps[i].col;
+			var ppx,ppy;
+			ppx=m_pps[i].x;ppy=m_pps[i].y-(m_sy/2);
+			ctx.beginPath();
+			
+			if(zcol=="#28c124"){
+				ctx.lineWidth=2;
+				ctx.moveTo(zx,zy);
+				ctx.lineTo(ppx,ppy);
+				ctx.stroke();
+			}
+			ctx.closePath();
+			zx=ppx;zy=ppy;zcol=col;
+		}	
+		
+
+		for(var i=0;i<m_pps.length;i++){
+			var col=m_pps[i].col;
+			var ppx,ppy;
+			ppx=m_pps[i].x;ppy=m_pps[i].y-(m_sy/2);
+			ctx.beginPath();
+			ctx.fillStyle = col;//"#c82124"; //red
+			ctx.arc(ppx,ppy,m_sx,0,2*Math.PI);
+			ctx.stroke();
+			ctx.fill();
+			
+			ctx.closePath();
+			zx=ppx;zy=ppy;
+		}	
+		
+	}
+	this.draw=function(){draw();};
+	function checkSelect(x,y){
+		for(var i=0;i<m_pps.length;i++){
+			if(x>m_pps[i].x-m_sx && x<m_pps[i].x+m_sx && y>m_pps[i].y-m_sy && y<m_pps[i].y+m_sy)
+			{	m_diffX=m_pps[i].x-x;
+				m_diffY=m_pps[i].y-y;
+				m_select=i;return;
+			} 
+		}
+	}
+	function doMouseDown(event){
+		//if (document.getElementById('xxx').checked) {m_button=0; }		else m_button=2;
+
+		var x=event.pageX,y=event.pageY;
+		x=x-m_rect.left;
+                y=y-m_rect.top;
+		if(m_button==2){
+			createPoint(x,y);
+			draw();
+		}
+		if(m_button==0){
+			checkSelect(x,y);
+		}
+	}
+	function doMouseMove(e){
+		var x=event.pageX,y=event.pageY;
+		x=x-m_rect.left;
+                y=y-m_rect.top;
+
+		if(m_select<9999){
+			//m_pps[m_select].x=x+m_diffX;
+			m_pps[m_select].y=y+m_diffY;
+			itschanged((m_select>=m_pps.length-m_maxP2)?1:0)
+			draw();}
+	}
+	function doMouseUp(e){
+		if(m_select<9999){m_select=9999;}
+	}
+	m_c.addEventListener("mousedown", doMouseDown, false);
+	m_c.addEventListener("mousemove",doMouseMove, false);
+        m_c.addEventListener("mouseup", doMouseUp, false);
+
+	
+}
+m_gg.prototype.cc=function(x,y){this.createPoint(x,y);}
+</script>
+</body>
+</html>
